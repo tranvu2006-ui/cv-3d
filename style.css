@@ -1,0 +1,706 @@
+/* ==========================================================================
+   DESIGN SYSTEM & VARIABLES
+   ========================================================================== */
+:root {
+  /* Fonts */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* HSL Color Palette */
+  --hue: 220;
+  --bg-primary: hsl(var(--hue), 25%, 7%);
+  --bg-secondary: hsl(var(--hue), 24%, 10%);
+  --bg-card: hsla(var(--hue), 24%, 12%, 0.75);
+  --bg-card-hover: hsla(var(--hue), 24%, 16%, 0.9);
+  
+  --text-primary: hsl(var(--hue), 10%, 90%);
+  --text-secondary: hsl(var(--hue), 10%, 65%);
+  --text-muted: hsl(var(--hue), 10%, 45%);
+  
+  --accent-primary: hsl(190, 90%, 50%); /* Neon Cyan */
+  --accent-primary-rgb: 0, 212, 255;
+  --accent-secondary: hsl(270, 85%, 60%); /* Purple */
+  --accent-success: hsl(145, 80%, 45%); /* Emerald */
+  --accent-warning: hsl(35, 90%, 50%); /* Amber */
+  
+  --border-color: hsla(var(--hue), 15%, 20%, 0.4);
+  --border-focus: hsla(190, 90%, 50%, 0.6);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.4);
+  
+  --glass-bg: hsla(var(--hue), 25%, 8%, 0.6);
+  --glass-border: hsla(0, 0%, 100%, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  
+  --transition-speed: 0.3s;
+}
+
+/* ==========================================================================
+   RESET & BASICS
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: #000;
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   WEBCAM & CANVAS positioning
+   ========================================================================== */
+video#webcam {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: 1;
+  transform: scaleX(-1); /* Mirror camera for natural movement */
+}
+
+canvas#canvas3d {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2;
+  pointer-events: none; /* Let user clicks pass to overlays */
+}
+
+/* ==========================================================================
+   LOADING OVERLAY
+   ========================================================================== */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-primary);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+.loading-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem;
+  max-width: 450px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.2);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loader-content h3 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.loader-content p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   HUD OVERLAY (2D GUI elements overlaying camera)
+   ========================================================================== */
+#hud-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+#hud-overlay button, 
+#hud-overlay a,
+.modal-content {
+  pointer-events: auto; /* Re-enable pointer events for GUI controls */
+}
+
+/* HUD Header */
+.hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.logo {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.logo-accent {
+  color: var(--accent-primary);
+}
+
+.hud-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.3rem;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.btn-icon {
+  margin-right: 0.5rem;
+  width: 16px;
+  height: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--accent-primary-rgb), 0.5);
+}
+
+.btn-secondary {
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.btn-secondary:hover {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Glassmorphism Styling */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow);
+}
+
+/* Prompt Card for Scanning */
+.scan-prompt {
+  align-self: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 95%;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.prompt-text h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #ffffff;
+}
+
+.prompt-text p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.gesture-tips {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--accent-primary);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Pulse Ring Animation */
+.pulse-ring {
+  width: 24px;
+  height: 24px;
+  background-color: var(--accent-primary);
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: pulse 1.8s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+  opacity: 0;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.3); opacity: 0.8; }
+  80% { opacity: 0; }
+  100% { transform: scale(1.1); opacity: 0; }
+}
+
+/* Scan Status Card */
+.scan-status {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.scan-status.lost {
+  border-left: 3px solid var(--accent-warning);
+  color: var(--accent-warning);
+}
+
+.scan-status.found {
+  border-left: 3px solid var(--accent-success);
+  color: var(--accent-success);
+}
+
+.status-icon-lost {
+  width: 14px;
+  height: 14px;
+}
+.status-icon-found {
+  width: 14px;
+  height: 14px;
+  animation: heartbeats 1.5s infinite;
+}
+
+@keyframes heartbeats {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   MODAL DIALOGS
+   ========================================================================== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* ==========================================================================
+   2D TRADITIONAL CV VIEW LAYOUT
+   ========================================================================== */
+.modal-content.cv-layout {
+  max-width: 900px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+}
+
+.cv-title-group h1 {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+  color: #fff;
+}
+
+.cv-title-group h2 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--accent-primary);
+}
+
+.cv-header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.cv-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2.5rem;
+}
+
+.cv-section {
+  margin-bottom: 2rem;
+}
+
+.cv-section:last-child {
+  margin-bottom: 0;
+}
+
+.cv-section h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #fff;
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cv-contact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.cv-contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cv-contact-list i {
+  color: var(--accent-primary);
+  width: 16px;
+  height: 16px;
+}
+
+.cv-skills-group h4 {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.cv-skills-group h4:first-of-type {
+  margin-top: 0;
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.skill-tags span {
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.cv-main-column p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.experience-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timeline-item {
+  border-left: 1px solid var(--border-color);
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.timeline-item::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  background-color: var(--accent-primary);
+  border-radius: 50%;
+  position: absolute;
+  top: 0.35rem;
+  left: -5px;
+}
+
+.timeline-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-title {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.timeline-duration {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.timeline-company {
+  font-size: 0.8rem;
+  color: var(--accent-primary);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.timeline-item p {
+  font-size: 0.85rem;
+}
+
+.projects-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.project-item h4 {
+  font-size: 0.95rem;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.project-item p {
+  font-size: 0.85rem;
+}
+
+/* Responsive CV modal */
+@media (max-width: 768px) {
+  .modal {
+    padding: 0.5rem;
+  }
+  .modal-content.cv-layout {
+    padding: 1.5rem;
+    max-height: 95vh;
+  }
+  .cv-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .cv-body-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  #hud-overlay {
+    padding: 1rem;
+  }
+  .scan-prompt {
+    padding: 1rem;
+  }
+  .logo {
+    font-size: 1.2rem;
+  }
+  .scan-status {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}
+
+/* ==========================================================================
+   PRINT MEDIA QUERY (PDF OPTIMIZATION)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 10pt;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  video, canvas,
+  #hud-overlay,
+  #loading-overlay,
+  .cv-header-actions,
+  #close-cv-btn {
+    display: none !important;
+  }
+  
+  .modal {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    background: none !important;
+    padding: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+  
+  .modal-content.cv-layout {
+    position: static !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #111111 !important;
+  }
+  
+  .cv-header {
+    border-bottom: 2px solid #222222 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  .cv-title-group h1 {
+    color: #000000 !important;
+    font-size: 24pt !important;
+  }
+  
+  .cv-title-group h2 {
+    color: #4b5563 !important;
+    font-size: 12pt !important;
+  }
+  
+  .cv-body-grid {
+    grid-template-columns: 1fr 2fr !important;
+    gap: 2rem !important;
+  }
+  
+  .cv-section h3 {
+    color: #000000 !important;
+    border-left: 3px solid #111111 !important;
+    font-size: 11pt !important;
+  }
+  
+  .cv-contact-list li {
+    color: #374151 !important;
+  }
+  
+  .cv-contact-list i {
+    display: none !important;
+  }
+  
+  .skill-tags span {
+    background: none !important;
+    color: #111111 !important;
+    border: 1px solid #9ca3af !important;
+  }
+  
+  .timeline-title {
+    color: #000000 !important;
+  }
+  
+  .timeline-company {
+    color: #4b5563 !important;
+  }
+  
+  .project-item h4 {
+    color: #000000 !important;
+  }
+  
+  p, span, li {
+    color: #222222 !important;
+  }
+}

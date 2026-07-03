@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trần Vũ | WebAR CV Nhận Diện Bàn Tay</title>
+  <meta name="description" content="CV thực tế ảo tương cường (WebAR) nhận diện bàn tay của Trần Vũ, sử dụng Google MediaPipe Hands & Three.js. Không cần ảnh quét.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- CDN Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- CDN Google MediaPipe Hands -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  
+  <!-- Local Lucide Icons -->
+  <script src="./lucide.min.js" defer></script>
+  
+  <!-- Main Script -->
+  <script src="script.js" defer></script>
+</head>
+<body style="margin: 0; overflow: hidden; background-color: #000;">
+
+  <!-- Background Webcam Feed -->
+  <video id="webcam" autoplay playsinline muted></video>
+
+  <!-- WebGL 3D Canvas -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- AI Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <h3>Đang khởi tạo AI...</h3>
+      <p>Vui lòng cấp quyền Camera và đợi giây lát để hệ thống tải mô hình nhận diện khớp xương tay Google MediaPipe.</p>
+    </div>
+  </div>
+
+  <!-- 2D HUD Overlay -->
+  <div id="hud-overlay">
+    <!-- Header -->
+    <header class="hud-header">
+      <div class="logo">
+        <span class="logo-accent">&lt;</span>Trần Vũ<span class="logo-accent">.CV /&gt;</span>
+      </div>
+      <div class="hud-actions">
+        <a href="https://tranvu2006-ui.github.io/" target="_blank" id="toggle-cv-view-btn" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="file-text" class="btn-icon"></i>Xem CV 2D
+        </a>
+      </div>
+    </header>
+
+    <!-- Scanning Guidance Prompt -->
+    <div id="scan-prompt" class="scan-prompt glass-card">
+      <div class="pulse-ring"></div>
+      <div class="prompt-text">
+        <h3>AR Nhận Diện Bàn Tay</h3>
+        <p>Đưa bàn tay thật của bạn lên camera để kích hoạt mô hình CV 3D.</p>
+        <div class="gesture-tips">
+          <span>✊ Nắm: Ẩn</span> | <span>🖐️ Mở: Hiện</span> | <span>☝️ Trỏ: Xoay</span> | <span>👍 Like: Nhảy</span> | <span>✌️ V: Đổi màu</span> | <span>👌 OK: Bản 2D</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Scanning Status -->
+    <div id="scan-status" class="scan-status glass-card lost">
+      <i data-lucide="eye-off" class="status-icon-lost"></i>
+      <i data-lucide="eye" class="status-icon-found hidden"></i>
+      <span id="status-text">Không tìm thấy tay</span>
+    </div>
+  </div>
+
+
+
+</body>
+</html>
